@@ -30,7 +30,7 @@ size_t ByteStream::write(const string &data) {
             _queue.push_back(data[i]);
 
     this->_in_num += num;
-
+    
     return num;
 }
 
