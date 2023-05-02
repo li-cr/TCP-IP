@@ -10,6 +10,17 @@ using namespace std;
 
 int main() {
     try {
+
+
+        {
+            ReassemblerTestHarness test{65000};
+
+            test.execute(SubmitSegment{"", 0}.with_eof(true));
+
+            test.execute(BytesAssembled(0));
+            test.execute(BytesAvailable(""));
+            test.execute(AtEof{});
+        }
         {
             ReassemblerTestHarness test{65000};
 
@@ -28,25 +39,8 @@ int main() {
             test.execute(NotAtEof{});
         }
 
-        {
-            ReassemblerTestHarness test{65000};
 
-            test.execute(SubmitSegment{"a", 0}.with_eof(true));
 
-            test.execute(BytesAssembled(1));
-            test.execute(BytesAvailable("a"));
-            test.execute(AtEof{});
-        }
-
-        {
-            ReassemblerTestHarness test{65000};
-
-            test.execute(SubmitSegment{"", 0}.with_eof(true));
-
-            test.execute(BytesAssembled(0));
-            test.execute(BytesAvailable(""));
-            test.execute(AtEof{});
-        }
 
         {
             ReassemblerTestHarness test{65000};

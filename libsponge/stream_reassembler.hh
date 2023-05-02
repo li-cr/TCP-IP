@@ -5,20 +5,19 @@
 
 #include <cstdint>
 #include <string>
-#include <queue>
+#include <map>
 #include <vector>
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    using _unit = std::pair<size_t, std::pair<std::string, bool>>;
-    std::priority_queue<_unit> _data;
+    std::map<int, std::pair<std::string, bool> > _data;
+    std::vector<bool> _bitmap;
     size_t _unassembled;
     size_t _assembled;
     ByteStream _output;  //!< The reassembled in-order byte stream
 	  size_t _capacity;    //!< The maximum number of bytes
-    std::vector<bool> _bitmap;
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
@@ -52,6 +51,8 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+    size_t mod(size_t _tmp){return _tmp % _capacity;}
+
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH

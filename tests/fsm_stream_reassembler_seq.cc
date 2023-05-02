@@ -3,6 +3,7 @@
 #include "stream_reassembler.hh"
 #include "util.hh"
 
+
 #include <exception>
 #include <iostream>
 
@@ -30,6 +31,7 @@ int main() {
             test.execute(SubmitSegment{"abcd", 0});
             test.execute(BytesAssembled(4));
             test.execute(NotAtEof{});
+
             test.execute(SubmitSegment{"efgh", 4});
             test.execute(BytesAssembled(8));
 

@@ -10,6 +10,25 @@ using namespace std;
 
 int main() {
     try {
+       
+        {
+            ReassemblerTestHarness test{2};
+
+            test.execute(SubmitSegment{"ab", 0});
+            test.execute(BytesAssembled(2));
+
+            test.execute(SubmitSegment{"cd", 2});
+            test.execute(BytesAssembled(2));
+
+            test.execute(BytesAvailable("ab"));
+            test.execute(BytesAssembled(2));
+
+            test.execute(SubmitSegment{"cd", 2});
+            test.execute(BytesAssembled(4));
+
+            test.execute(BytesAvailable("cd"));
+        }
+        
         {
             ReassemblerTestHarness test{2};
 
@@ -26,23 +45,7 @@ int main() {
             test.execute(BytesAvailable("ef"));
         }
 
-        {
-            ReassemblerTestHarness test{2};
 
-            test.execute(SubmitSegment{"ab", 0});
-            test.execute(BytesAssembled(2));
-
-            test.execute(SubmitSegment{"cd", 2});
-            test.execute(BytesAssembled(2));
-
-            test.execute(BytesAvailable("ab"));
-            test.execute(BytesAssembled(2));
-
-            test.execute(SubmitSegment{"cd", 2});
-            test.execute(BytesAssembled(4));
-
-            test.execute(BytesAvailable("cd"));
-        }
 
         {
             ReassemblerTestHarness test{1};
