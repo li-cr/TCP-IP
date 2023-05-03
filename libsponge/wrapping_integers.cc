@@ -32,11 +32,13 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     uint32_t off = n.raw_value() - isn.raw_value();
 
     uint64_t t = checkpoint - checkpoint % (1ul<<32) + off;
-    uint64_t ans = t;
-    
-    if(abs(int64_t(t + (1ul<<32) - checkpoint)) < abs(int64_t(t - checkpoint)))
+    uint64_t ans = t; 
+
+    int64_t A = t + (1ul<<32) - checkpoint, B = ans - checkpoint;
+
+    if( abs(int64_t(t + (1ul<<32) - checkpoint)) < abs(int64_t(ans - checkpoint)))
         ans = ans + (1ul<<32);
-    if(checkpoint >= (1ul<<32) && abs(int64_t(t - (1ul<<32) - checkpoint)) < abs(int64_t(t - checkpoint)))
+    if(t >= (1ul<<32) && abs(int64_t(t - (1ul<<32) - checkpoint)) < abs(int64_t(ans - checkpoint)))
         ans = ans - (1ul<<32);
     return ans;
 }

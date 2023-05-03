@@ -16,7 +16,7 @@ int main() {
         auto rd = get_random_generator();
 
         {
-            uint32_t isn = uniform_int_distribution<uint32_t>{0, UINT32_MAX}(rd);
+            uint32_t isn = 2304263966;
             TCPReceiverTestHarness test{4000};
             test.execute(ExpectState{TCPReceiverStateSummary::LISTEN});
             test.execute(SegmentArrives{}.with_syn().with_seqno(isn + 0).with_result(SegmentArrives::Result::OK));

@@ -14,7 +14,21 @@ using namespace std;
 int main() {
     try {
         // auto rd = get_random_generator();
-
+        {
+            // almost-high-seqno segment is accepted, but only some bytes are kept
+            size_t cap = 2;
+            uint32_t isn = 23452;
+            TCPReceiverTestHarness test{cap};
+            test.execute(SegmentArrives{}.with_syn().with_seqno(isn).with_result(SegmentArrives::Result::OK));
+            test.execute(SegmentArrives{}.with_seqno(isn + 2).with_data("bc").with_result(SegmentArrives::Result::OK));
+            test.execute(ExpectTotalAssembledBytes{0});
+            test.execute(SegmentArrives{}.with_seqno(isn + 1).with_data("a").with_result(SegmentArrives::Result::OK));
+            test.execute(ExpectAckno{WrappingInt32{isn + 3}});
+            test.execute(ExpectWindow{0});
+            test.execute(ExpectTotalAssembledBytes{2});
+            test.execute(ExpectBytes{"ab"});
+            test.execute(ExpectWindow{2});
+        }
         {
             // Window size decreases appropriately
             size_t cap = 4000;
@@ -70,21 +84,7 @@ int main() {
             test.execute(ExpectTotalAssembledBytes{0});
         }
 
-        {
-            // almost-high-seqno segment is accepted, but only some bytes are kept
-            size_t cap = 2;
-            uint32_t isn = 23452;
-            TCPReceiverTestHarness test{cap};
-            test.execute(SegmentArrives{}.with_syn().with_seqno(isn).with_result(SegmentArrives::Result::OK));
-            test.execute(SegmentArrives{}.with_seqno(isn + 2).with_data("bc").with_result(SegmentArrives::Result::OK));
-            test.execute(ExpectTotalAssembledBytes{0});
-            test.execute(SegmentArrives{}.with_seqno(isn + 1).with_data("a").with_result(SegmentArrives::Result::OK));
-            test.execute(ExpectAckno{WrappingInt32{isn + 3}});
-            test.execute(ExpectWindow{0});
-            test.execute(ExpectTotalAssembledBytes{2});
-            test.execute(ExpectBytes{"ab"});
-            test.execute(ExpectWindow{2});
-        }
+
 
         {
             // low-seqno segment is rejected

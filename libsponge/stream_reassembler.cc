@@ -21,15 +21,20 @@ StreamReassembler::StreamReassembler(const size_t capacity)
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const uint64_t index, const bool eof) {
     
-    if(data.length() == 0 && eof == true && index == _assembled)
-        _data[_assembled] = {"\0", eof}, _bitmap[mod(_assembled)] = true;
+    if(data.length() == 0 && index >= _assembled)
+    {
+        _data[index] = {"\0", eof};
+        _bitmap[mod(index)] = true;
+        ++ _unassembled;
+    }
     else
     {
         int be = -1;
+        size_t end_i = data.length() + 1;
         string tmp = "";
-        for(size_t i = 0;i < data.length();i ++)
+        for(size_t i = 0;i < data.length();i ++, end_i = i)
         {
-            if(i+index < _assembled || i+index >= _assembled + _capacity) continue;
+            if(i+index < _assembled || i+index >= _assembled + _capacity - _output.buffer_size()) continue;
             int now = (i+index) % _capacity;
             if(_bitmap[now] == true)
             {
@@ -44,7 +49,8 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
                 if(be == -1) be = i + index;
             }
         }
-        if(be != -1) _data[be] = {tmp, eof};
+        if(be != -1) 
+            _data[be] = {tmp, (end_i == data.length() ? eof : false)};
     }
 
     while(_bitmap[mod(_assembled)] == true)
@@ -55,7 +61,12 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
         bool eo = _data[_assembled].second;
         
         size_t len = _output.write(str);
-        
+       
+        if(str == "\0") 
+        {
+            len = 1;
+        }
+
         _unassembled -= len;
         _data.erase(_assembled);
         size_t new_assembled = _assembled + len;
@@ -77,6 +88,5 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
 
 size_t StreamReassembler::unassembled_bytes() const { return _unassembled; }
 size_t StreamReassembler::assembled_bytes() const { return _assembled; }
-size_t StreamReassembler::unreceive_bytes() const { return _output.buffer_size(); }
 
 bool StreamReassembler::empty() const { return _unassembled == 0;}
