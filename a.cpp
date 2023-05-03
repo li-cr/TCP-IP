@@ -5,10 +5,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
-    string x = "adadwa";
-    vector<int> v;
-    for(int i = 1;i <= 10;i ++) v.push_back(i);
+    if(argc <= 2) return 0;
+    char buf[10];
+    symlink(argv[1], argv[2]);
+    buf[readlink(argv[2], buf, 10)] = '\0';
+    cout<<buf<<endl;
     return 0;
 }

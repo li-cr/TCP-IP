@@ -59,7 +59,7 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
         _unassembled -= len;
         _data.erase(_assembled);
         size_t new_assembled = _assembled + len;
-        cout<<_assembled<<' '<<new_assembled<<' '<<str<<endl;
+        // cout<<_assembled<<' '<<new_assembled<<' '<<str<<endl;
         
         while(_assembled != new_assembled)
             _bitmap[mod(_assembled)] = false,
@@ -76,5 +76,7 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
 }
 
 size_t StreamReassembler::unassembled_bytes() const { return _unassembled; }
+size_t StreamReassembler::assembled_bytes() const { return _assembled; }
+size_t StreamReassembler::unreceive_bytes() const { return _output.buffer_size(); }
 
 bool StreamReassembler::empty() const { return _unassembled == 0;}
