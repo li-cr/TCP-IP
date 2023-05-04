@@ -108,5 +108,6 @@
         "typeindex": "cpp",
         "valarray": "cpp"
     },
-    "cmake.sourceDirectory": "/home/lcr/TCP-Lab/apps"
+    "cmake.sourceDirectory": "/home/lcr/TCP-Lab/apps",
+    "cmake.configureOnOpen": true
 }

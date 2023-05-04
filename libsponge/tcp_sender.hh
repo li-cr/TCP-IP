@@ -20,15 +20,25 @@ class TCPSender {
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
+    uint64_t _in_fligth_bytes = 0;
     //! outbound queue of segments that the TCPSender wants sent
     std::queue<TCPSegment> _segments_out{};
+    std::queue<TCPSegment> _segments_outstanding{};
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
+    unsigned int _retransmission_timeout;
+    uint16_t _retry_times;
+    bool _timer;
+    uint64_t _tim;
 
+    uint16_t _window_size;
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
-
+    
+    uint64_t _now_ack;
+    bool _send_syn;
+    bool _send_fin;
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 

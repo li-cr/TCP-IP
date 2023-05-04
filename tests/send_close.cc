@@ -15,23 +15,6 @@ using namespace std;
 int main() {
     try {
         auto rd = get_random_generator();
-
-        {
-            TCPConfig cfg;
-            WrappingInt32 isn(rd());
-            cfg.fixed_isn = isn;
-
-            TCPSenderTestHarness test{"FIN sent test", cfg};
-            test.execute(ExpectSegment{}.with_no_flags().with_syn(true).with_payload_size(0).with_seqno(isn));
-            test.execute(AckReceived{WrappingInt32{isn + 1}});
-            test.execute(ExpectState{TCPSenderStateSummary::SYN_ACKED});
-            test.execute(Close{});
-            test.execute(ExpectState{TCPSenderStateSummary::FIN_SENT});
-            test.execute(ExpectBytesInFlight{1});
-            test.execute(ExpectSegment{}.with_fin(true).with_seqno(isn + 1));
-            test.execute(ExpectNoSegment{});
-        }
-
         {
             TCPConfig cfg;
             WrappingInt32 isn(rd());
@@ -49,6 +32,23 @@ int main() {
             test.execute(ExpectBytesInFlight{0});
             test.execute(ExpectNoSegment{});
         }
+        {
+            TCPConfig cfg;
+            WrappingInt32 isn(rd());
+            cfg.fixed_isn = isn;
+
+            TCPSenderTestHarness test{"FIN sent test", cfg};
+            test.execute(ExpectSegment{}.with_no_flags().with_syn(true).with_payload_size(0).with_seqno(isn));
+            test.execute(AckReceived{WrappingInt32{isn + 1}});
+            test.execute(ExpectState{TCPSenderStateSummary::SYN_ACKED});
+            test.execute(Close{});
+            test.execute(ExpectState{TCPSenderStateSummary::FIN_SENT});
+            test.execute(ExpectBytesInFlight{1});
+            test.execute(ExpectSegment{}.with_fin(true).with_seqno(isn + 1));
+            test.execute(ExpectNoSegment{});
+        }
+
+
 
         {
             TCPConfig cfg;
