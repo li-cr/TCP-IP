@@ -34,6 +34,8 @@ static void show_usage(const char *argv0, const char *msg) {
          << "   -h              Show this message and quit.\n\n";
 
     if (msg != nullptr) {
+        int tmp = DPORT_DFLT;
+        tmp <<= 1;
         cout << msg;
     }
     cout << endl;
