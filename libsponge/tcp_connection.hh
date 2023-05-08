@@ -9,10 +9,14 @@
 //! \brief A complete endpoint of a TCP connection
 class TCPConnection {
   private:
+
     TCPConfig _cfg;
     TCPReceiver _receiver{_cfg.recv_capacity};
     TCPSender _sender{_cfg.send_capacity, _cfg.rt_timeout, _cfg.fixed_isn};
 
+    bool _rst{false};
+    bool _is_live{true};
+    size_t _time_since_last_recv_segment{0};
     //! outbound queue of segments that the TCPConnection wants sent
     std::queue<TCPSegment> _segments_out{};
 
@@ -79,7 +83,9 @@ class TCPConnection {
     //! after both streams have finished (e.g. to ACK retransmissions from the peer)
     bool active() const;
     //!@}
-    void sender_to_this() ;
+    void sender_to_this();
+    void set_rst_state(bool to_send_segment);
+
     //! Construct a new connection from a configuration
     explicit TCPConnection(const TCPConfig &cfg) : _cfg{cfg} {}
 

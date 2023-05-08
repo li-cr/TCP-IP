@@ -7,7 +7,6 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    int fd = open("b.cpp", O_WRONLY);
-    write(fd, "\0", 1);
+    sleep(3);
     return 0;
 }

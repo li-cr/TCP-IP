@@ -21,8 +21,9 @@ StreamReassembler::StreamReassembler(const size_t capacity)
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const uint64_t index, const bool eof) {
     
-    if(data.length() == 0 && index >= _assembled)
+    if(data.length() == 0)
     {
+        if(eof == false) return ;
         _data[index] = {"\0", eof};
         _bitmap[mod(index)] = true;
         ++ _unassembled;
@@ -50,7 +51,11 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
             }
         }
         if(be != -1) 
-            _data[be] = {tmp, (end_i == data.length() ? eof : false)};
+        {
+            _data[be] = {tmp, false};
+            if(end_i == data.length() && eof)
+                push_substring("\0", be + tmp.length(), true);
+        }
     }
 
     while(_bitmap[mod(_assembled)] == true)
@@ -70,7 +75,6 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
         _unassembled -= len;
         _data.erase(_assembled);
         size_t new_assembled = _assembled + len;
-        // cout<<_assembled<<' '<<new_assembled<<' '<<str<<endl;
         
         while(_assembled != new_assembled)
             _bitmap[mod(_assembled)] = false,

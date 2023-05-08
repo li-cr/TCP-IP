@@ -12,7 +12,7 @@
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    std::map<int, std::pair<std::string, bool> > _data;
+    std::map<int, std::pair<std::string, bool> > _data{};
     std::vector<bool> _bitmap;
     size_t _unassembled;
     size_t _assembled;

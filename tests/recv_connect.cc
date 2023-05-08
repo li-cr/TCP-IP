@@ -18,7 +18,7 @@ int main() {
         {
             TCPReceiverTestHarness test{4000};
             test.execute(ExpectWindow{4000});
-            test.execute(ExpectAckno{std::optional<WrappingInt32>{}});
+            test.execute(ExpectAckno{std::optional<WrappingInt32>{}} );
             test.execute(ExpectUnassembledBytes{0});
             test.execute(ExpectTotalAssembledBytes{0});
             test.execute(SegmentArrives{}.with_syn().with_seqno(0).with_result(SegmentArrives::Result::OK));

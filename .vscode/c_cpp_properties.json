@@ -11,7 +11,7 @@
                 "${workspaceFolder}/libsponge/tcp_helpers"
             ],
             "defines": [],
-            "compilerPath": "/usr/local/bin/clang",
+            "compilerPath": "/usr/bin/clang",
             "cStandard": "c17",
             "cppStandard": "c++14",
             "intelliSenseMode": "linux-clang-x64",
