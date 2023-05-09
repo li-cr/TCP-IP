@@ -16,7 +16,47 @@ using State = TCPTestHarness::State;
 int main() {
     try {
         TCPConfig cfg{};
+        {
+            printf(" test 6\n");
+            TCPTestHarness test_6 = TCPTestHarness::in_established(cfg);
 
+            test_6.execute(Close{});
+            test_6.execute(Tick(1));
+
+            TCPSegment seg1 = test_6.expect_seg(ExpectOneSegment{}.with_fin(true),
+
+                                                "test 6 failed: bad FIN after close()");
+
+            auto &seg1_hdr = seg1.header();
+
+            test_6.execute(Tick(cfg.rt_timeout - 2));
+
+            test_6.execute(ExpectNoSegment{}, "test 6 failed: FIN re-tx was too fast");
+
+            test_6.execute(Tick(2));
+
+            TCPSegment seg2 = test_6.expect_seg(ExpectOneSegment{}.with_fin(true).with_seqno(seg1_hdr.seqno),
+
+                                                "test 6 failed: bad re-tx FIN");
+            auto &seg2_hdr = seg2.header();
+
+            const WrappingInt32 rx_seqno{1};
+            test_6.send_fin(rx_seqno, WrappingInt32{0});
+            const auto ack_expect = rx_seqno + 1;
+            test_6.execute(Tick(1));
+
+            test_6.execute(ExpectState{State::CLOSING});
+            test_6.execute(ExpectOneSegment{}.with_ack(true).with_ackno(ack_expect), "test 6 failed: bad ACK for FIN");
+
+            test_6.send_ack(ack_expect, seg2_hdr.seqno + 1);
+            test_6.execute(Tick(1));
+
+            test_6.execute(ExpectState{State::TIME_WAIT});
+
+            test_6.execute(Tick(10 * cfg.rt_timeout));
+
+            test_6.execute(ExpectState{State::CLOSED});
+        }
         // test #1: start in TIME_WAIT, timeout
         {
             TCPTestHarness test_1 = TCPTestHarness::in_time_wait(cfg);
@@ -36,6 +76,7 @@ int main() {
 
         // test #2: start in CLOSING, send ack, time out
         {
+            printf(" ---- \n");
             TCPTestHarness test_2 = TCPTestHarness::in_closing(cfg);
 
             test_2.execute(Tick(4 * cfg.rt_timeout));
@@ -148,46 +189,7 @@ int main() {
         }
 
         // test 6: start in ESTABLISHED, get FIN, get FIN re-tx, send FIN, get ACK, send ACK, time out
-        {
-            TCPTestHarness test_6 = TCPTestHarness::in_established(cfg);
-
-            test_6.execute(Close{});
-            test_6.execute(Tick(1));
-
-            TCPSegment seg1 = test_6.expect_seg(ExpectOneSegment{}.with_fin(true),
-
-                                                "test 6 failed: bad FIN after close()");
-
-            auto &seg1_hdr = seg1.header();
-
-            test_6.execute(Tick(cfg.rt_timeout - 2));
-
-            test_6.execute(ExpectNoSegment{}, "test 6 failed: FIN re-tx was too fast");
-
-            test_6.execute(Tick(2));
-
-            TCPSegment seg2 = test_6.expect_seg(ExpectOneSegment{}.with_fin(true).with_seqno(seg1_hdr.seqno),
-
-                                                "test 6 failed: bad re-tx FIN");
-            auto &seg2_hdr = seg2.header();
-
-            const WrappingInt32 rx_seqno{1};
-            test_6.send_fin(rx_seqno, WrappingInt32{0});
-            const auto ack_expect = rx_seqno + 1;
-            test_6.execute(Tick(1));
-
-            test_6.execute(ExpectState{State::CLOSING});
-            test_6.execute(ExpectOneSegment{}.with_ack(true).with_ackno(ack_expect), "test 6 failed: bad ACK for FIN");
-
-            test_6.send_ack(ack_expect, seg2_hdr.seqno + 1);
-            test_6.execute(Tick(1));
-
-            test_6.execute(ExpectState{State::TIME_WAIT});
-
-            test_6.execute(Tick(10 * cfg.rt_timeout));
-
-            test_6.execute(ExpectState{State::CLOSED});
-        }
+       
     } catch (const exception &e) {
         cerr << e.what() << endl;
         return EXIT_FAILURE;

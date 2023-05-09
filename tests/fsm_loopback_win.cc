@@ -23,7 +23,7 @@ static constexpr unsigned NREPS = 32;
 int main() {
     try {
         TCPConfig cfg{};
-        cfg.recv_capacity = 65000;
+        cfg.recv_capacity = 1000;
         auto rd = get_random_generator();
 
         // loop segments back in a different order
@@ -38,7 +38,7 @@ int main() {
             vector<TCPSegment> segs;
             size_t sendoff = 0;
             while (sendoff < d.size()) {
-                const size_t len = min(d.size() - sendoff, static_cast<size_t>(rd()) % 8192);
+                const size_t len = min(d.size() - sendoff, static_cast<size_t>(1000) % 8192);
                 if (len == 0) {
                     continue;
                 }

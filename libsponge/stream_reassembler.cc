@@ -14,28 +14,22 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 using namespace std;
 
 StreamReassembler::StreamReassembler(const size_t capacity)
-    : _bitmap(vector<bool>(capacity)),  _unassembled(0),_assembled(0), _output(capacity), _capacity(capacity) {}
+    :  _bitmap(vector<bool>(capacity)),  _unassembled(0),_assembled(0), _fin_index(0), _fin(false), _output(capacity), _capacity(capacity) {}
 
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const uint64_t index, const bool eof) {
-    
-    if(data.length() == 0)
-    {
-        if(eof == false) return ;
-        _data[index] = {"\0", eof};
-        _bitmap[mod(index)] = true;
-        ++ _unassembled;
-    }
-    else
+
     {
         int be = -1;
-        size_t end_i = data.length() + 1;
+        size_t end_i = 0;
         string tmp = "";
         for(size_t i = 0;i < data.length();i ++, end_i = i)
         {
             if(i+index < _assembled || i+index >= _assembled + _capacity - _output.buffer_size()) continue;
+            if(_fin && i + index >= _fin_index) continue;
+
             int now = (i+index) % _capacity;
             if(_bitmap[now] == true)
             {
@@ -51,27 +45,28 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
             }
         }
         if(be != -1) 
-        {
             _data[be] = {tmp, false};
-            if(end_i == data.length() && eof)
-                push_substring("\0", be + tmp.length(), true);
+        if(end_i == data.length() && eof)
+        {
+            _fin_index = index + data.length();
+            _bitmap[_fin_index] = true;
+            _fin = true;
         }
     }
 
     while(_bitmap[mod(_assembled)] == true)
     {
-        if(_output.input_ended() == true) break;
+        if(_fin && _assembled == _fin_index)
+        {
+            _output.end_input();
+            break;
+        }
         
         string str = _data[_assembled].first;
         bool eo = _data[_assembled].second;
         
         size_t len = _output.write(str);
        
-        if(str == "\0") 
-        {
-            len = 1;
-        }
-
         _unassembled -= len;
         _data.erase(_assembled);
         size_t new_assembled = _assembled + len;
@@ -81,14 +76,10 @@ void StreamReassembler::push_substring(const string &data, const uint64_t index,
             ++ _assembled;
 
         if(len < str.length())
-        {
             _data[_assembled] = {str.substr(len), eo};
-            if(len == 0) break;
-        }
-        else if(eo == true) 
-            _output.end_input();
+
     }
-}
+}   
 
 size_t StreamReassembler::unassembled_bytes() const { return _unassembled; }
 size_t StreamReassembler::assembled_bytes() const { return _assembled; }

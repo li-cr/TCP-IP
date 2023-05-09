@@ -71,16 +71,8 @@ void TCPSender::fill_window()
 
         if(len > 0) break;
     }
-    _retransmission_timeout = _initial_retransmission_timeout;
-    _retry_times = 0;   
-    if(_segments_outstanding.empty() == false)
-    {
-        _timer = true;
-        _tim = 0;
-    }
-    else{
-        _timer = false;
-    }
+    // ack_receive + 初始化 都会经过这里 但是 ack_receive 需要 对时间 重新 定值。
+    _timer = !_segments_outstanding.empty();
 }
 
 //! \param ackno The remote receiver's ackno (acknowledgment number)
@@ -93,6 +85,10 @@ bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     if(_ack > _next_seqno) return false;
     _window_size = window_size;
     if(_ack <= _now_ack) return true;
+    
+    _retransmission_timeout = _initial_retransmission_timeout;
+    _retry_times = 0;  
+    _tim = 0;
 
     while(_segments_outstanding.empty() == false)
     {
@@ -106,6 +102,8 @@ bool TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     }
     _now_ack = _ack;
     fill_window();
+
+
     return true;
 }
 
@@ -119,7 +117,8 @@ void TCPSender::tick(const size_t ms_since_last_tick)
         _retransmission_timeout <<= 1;
         _retry_times = _retry_times + 1;
         _tim = 0;
-        _segments_out.push(_segments_outstanding.front());
+        if(_segments_out.empty())
+            _segments_out.push(_segments_outstanding.front());
     }
     return ;
 }

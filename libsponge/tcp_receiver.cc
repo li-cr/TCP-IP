@@ -26,8 +26,10 @@ bool TCPReceiver::segment_received(const TCPSegment &seg) {
     uint64_t be = unwrap(seq, _isn, _checkpoint);
     uint64_t en = be + seg.length_in_sequence_space();
 
-    if(en <= _reassembler.assembled_bytes() + 1 - syn) return false;
-    if(be >= _reassembler.assembled_bytes() + 1 + window_size()) return false;
+    size_t x =_reassembler.assembled_bytes() + 1 - syn + _reassembler.stream_out().input_ended();
+    if(seg.length_in_sequence_space() == 0 && be == x) return true;
+    if(en <= x) return false;
+    if(be >= x + window_size()) return false;
 
     _checkpoint = be;
     
@@ -40,7 +42,7 @@ std::optional<WrappingInt32> TCPReceiver::ackno() const
 { 
     if(_syn == false) return {};
 
-    return wrap(_reassembler.assembled_bytes() + 1, _isn); 
+    return wrap(_reassembler.assembled_bytes() + 1 + _reassembler.stream_out().input_ended(), _isn); 
 }
 
 size_t TCPReceiver::window_size() const { return _capacity - _reassembler.stream_out().buffer_size() ; }

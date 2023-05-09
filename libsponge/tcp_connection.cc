@@ -23,13 +23,11 @@ size_t TCPConnection::time_since_last_segment_received() const { return _time_si
 void TCPConnection::segment_received(const TCPSegment &seg) {
     bool rst = seg.header().rst;
     bool ack = seg.header().ack;
-    bool syn = seg.header().syn;
+    // bool syn = seg.header().syn;
     _time_since_last_recv_segment = 0;
 
-    if (TCPState::state_summary(_sender) == TCPSenderStateSummary::SYN_SENT) {
-        if (ack && !syn && !rst)  return;
-        if (!ack && rst)          return;
-    }
+    if (TCPState::state_summary(_sender) == TCPSenderStateSummary::SYN_SENT && ack && seg.payload().size())
+        return;
 
     if (rst == true) {
         _rst = true;
@@ -40,14 +38,14 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 
     bool need_to_send_empty_seg = false;
 
-   if( _receiver.segment_received(seg) == false && _receiver.ackno().has_value() && seg.payload().size())
+    if (_receiver.segment_received(seg) == false)
         need_to_send_empty_seg = true;
 
     if (ack == true && _sender.next_seqno_absolute() > 0) {
         if (_sender.ack_received(seg.header().ackno, seg.header().win) == false)
             need_to_send_empty_seg = true;
     }
-    
+
     if (TCPState::state_summary(_receiver) == TCPReceiverStateSummary::SYN_RECV &&
         TCPState::state_summary(_sender) == TCPSenderStateSummary::CLOSED) {
         connect();
@@ -59,28 +57,35 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         _linger_after_streams_finish = false;
 
     if (TCPState::state_summary(_receiver) == TCPReceiverStateSummary::FIN_RECV &&
-        TCPState::state_summary(_sender) == TCPSenderStateSummary::FIN_ACKED && !_linger_after_streams_finish)
+        TCPState::state_summary(_sender) == TCPSenderStateSummary::FIN_ACKED && !_linger_after_streams_finish) {
         _is_live = false;
-   
-    if(seg.length_in_sequence_space() > 0 && _receiver.ackno().has_value())
+    }
+
+    if (seg.length_in_sequence_space() > 0)
         need_to_send_empty_seg = true;
 
-    if (need_to_send_empty_seg && _is_live)
+    if (need_to_send_empty_seg && _is_live && _receiver.ackno().has_value() && _sender.segments_out().empty())
         _sender.send_empty_segment();
     sender_to_this();
 }
 
 bool TCPConnection::active() const { return _is_live; }
 
-size_t TCPConnection::write(const string &data) { return _sender.stream_in().write(data); }
+size_t TCPConnection::write(const string &data) 
+{ 
+    size_t num = _sender.stream_in().write(data);
+    _sender.fill_window();
+    sender_to_this();
+    return num; 
+}
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
-    _sender.tick(ms_since_last_tick);
 
-    if (_rst)
+    if (_rst || !_is_live)
         return;
-    if (_sender.consecutive_retransmissions() >= TCPConfig::MAX_RETX_ATTEMPTS) {
+    _sender.tick(ms_since_last_tick);
+    if (_sender.consecutive_retransmissions() > TCPConfig::MAX_RETX_ATTEMPTS) {
         set_rst_state(true);
         return;
     }
@@ -88,7 +93,7 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
     _time_since_last_recv_segment += ms_since_last_tick;
 
     if (TCPState::state_summary(_receiver) == TCPReceiverStateSummary::FIN_RECV &&
-        TCPState::state_summary(_sender) == TCPSenderStateSummary::FIN_ACKED && _linger_after_streams_finish == true &&
+        TCPState::state_summary(_sender) == TCPSenderStateSummary::FIN_ACKED && _linger_after_streams_finish &&
         time_since_last_segment_received() >= 10 * _cfg.rt_timeout) {
         _is_live = false;
     }

@@ -16,6 +16,8 @@ class StreamReassembler {
     std::vector<bool> _bitmap;
     size_t _unassembled;
     size_t _assembled;
+    size_t _fin_index;
+    bool _fin;
     ByteStream _output;  //!< The reassembled in-order byte stream
 	  size_t _capacity;    //!< The maximum number of bytes
   public:
